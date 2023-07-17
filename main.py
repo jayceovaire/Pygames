@@ -18,6 +18,7 @@ class Player:
         self.health_color = (255, 0, 0)
         self.healthbar = pygame.Surface((self.healthbar_width, self.healthbar_height))
         self.mask = pygame.mask.from_surface(self.image)
+        self.moving = False
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.x, self.y))
@@ -32,12 +33,23 @@ class Player:
     def movement(self, keys, SCR_WID, SCR_HEI):
         if keys[pygame.K_LEFT] and self.x - self.speed > 0:
             self.x -= self.speed
+            self.moving = True
+
         if keys[pygame.K_RIGHT] and self.x + self.width + self.speed < SCR_WID:
             self.x += self.speed
+            self.moving = True
+
         if keys[pygame.K_UP] and self.y - self.speed > 0:
             self.y -= self.speed
+            self.moving = True
+
         if keys[pygame.K_DOWN] and self.y + self.height + self.speed < SCR_HEI:
             self.y += self.speed
+            self.moving = True
+
+        elif not keys[pygame.K_LEFT] and not keys[pygame.K_RIGHT] and not keys[pygame.K_UP] and not keys[pygame.K_DOWN]:
+            self.moving = False
+
 
 class Fist:
     def __init__(self, ftype):
@@ -45,12 +57,19 @@ class Fist:
         self.speed_y = 5
         self.width = random.randint(10, 90)
         self.height = random.randint(10, 90)
-        self.timer = pygame.time.get_ticks() + 7000
+        self.timer = pygame.time.get_ticks() + 5000
         self.type = ftype
         self.hit_player = False
 
-        if self.type == 'fist_v':
-            fist_image = pygame.image.load('fist.png')
+        if self.type == 'fist_v_bot_l':
+            fist_image = pygame.image.load('fist_bottom_left.png')
+            self.image = pygame.transform.scale(fist_image, (200, 800))
+            self.mask = pygame.mask.from_surface(self.image)
+            self.x = random.randint(0, 980)
+            self.y = 615
+
+        if self.type == 'fist_v_bot_r':
+            fist_image = pygame.image.load('fist_bottom_right.png')
             self.image = pygame.transform.scale(fist_image, (200, 800))
             self.mask = pygame.mask.from_surface(self.image)
             self.x = random.randint(0, 980)
@@ -59,24 +78,47 @@ class Fist:
 
         if self.type == 'fist_h_l':
             fist_image = pygame.image.load('fist_left_smash.png')
-            self.image = pygame.transform.scale(fist_image, (800, 200))
+            self.image = pygame.transform.scale(fist_image, (700, 200))
             self.mask = pygame.mask.from_surface(self.image)
-            self.x = -500
+            self.x = -600
             self.y = random.randint(0, 300)
 
         if self.type == 'fist_h_r':
             fist_image = pygame.image.load('fist_right_smash.png')
-            self.image = pygame.transform.scale(fist_image, (800, 200))
+            self.image = pygame.transform.scale(fist_image, (700, 200))
             self.mask = pygame.mask.from_surface(self.image)
-            self.x = 750
+            self.x = 850
             self.y = random.randint(0, 640)
 
+        if self.type == 'fist_v_top_l':
+            fist_image = pygame.image.load('fist_top_left.png')
+            self.image = pygame.transform.scale(fist_image, (200, 700))
+            self.mask = pygame.mask.from_surface(self.image)
+            self.x = random.randint(0, 980)
+            self.y = -600
+
+        if self.type == 'fist_v_top_r':
+            fist_image = pygame.image.load('fist_top_right.png')
+            self.image = pygame.transform.scale(fist_image, (200, 700))
+            self.mask = pygame.mask.from_surface(self.image)
+            self.x = random.randint(0, 980)
+            self.y = -600
+
+
+
+
     def movement(self):
-        if self.type == 'fist_v':
+        if self.type == 'fist_v_bot_l':
             self.y -= self.speed_y
             if self.y == 200:
                 self.speed_y = 0
                 self.x -= self.speed_x + 3
+
+        if self.type == 'fist_v_bot_r':
+            self.y -= self.speed_y
+            if self.y == 200:
+                self.speed_y = 0
+                self.x += self.speed_x + 3
 
         if self.type == 'fist_h_l':
             self.x -= -self.speed_x
@@ -89,6 +131,18 @@ class Fist:
             if self.x == 400:
                 self.speed_x = 0
                 self.y += self.speed_y + 2
+
+        if self.type == 'fist_v_top_l':
+            self.y += self.speed_y
+            if self.y == -300:
+                self.speed_y = 0
+                self.x -= self.speed_x + 3
+
+        if self.type == 'fist_v_top_r':
+            self.y += self.speed_y
+            if self.y == -300:
+                self.speed_y = 0
+                self.x += self.speed_x + 3
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.x, self.y))
@@ -204,7 +258,7 @@ class Boss:
             'monster_two': 'cipher_monster_two.png',
             'selfie': 'cipher_selfie.png'
         }
-        self.form = 'shadow'
+        self.form = 'monster'
        # self.form = random.choice(['shadow', 'normal', 'angry', 'fire', 'monster', 'monster_two', 'selfie'])
         self.width = 200
         self.height = 300
@@ -219,10 +273,14 @@ class Boss:
         self.fists_spawned = False
         self.fists = []
 
+
         if self.form == 'monster':
-            self.width = 400
+            self.width = 500
+            self.height = 500
             self.x = SCR_WID // 2 - self.width // 2
+            self.y = SCR_HEI // 2 - 200
         self.image = pygame.transform.scale(boss_image, (self.width, self.height))
+        self.mask = pygame.mask.from_surface(self.image)
 
     def shadows_attack(self):
         if self.form == 'shadow':
@@ -261,11 +319,10 @@ class Boss:
         if self.form == 'monster':
             if not self.fists and self.form == 'monster' and not self.used_attack:
                 self.fists_spawned = False
-            if self.num_fists_spawned < 12 and not self.fists_spawned:
+            if self.num_fists_spawned < 20 and not self.fists_spawned:
                 fists_spawned = random.randint(2, 4)
                 for _ in range(fists_spawned):
-                    fist = Fist(ftype=random.choice(['fist_h_l', 'fist_h_r', 'fist_v']))
-                    # fist = Fist(ftype='fist_h_l')
+                    fist = Fist(ftype=random.choice(['fist_h_l', 'fist_h_r', 'fist_v_bot_l', 'fist_v_bot_r', 'fist_v_top_l', 'fist_v_top_r']))
                     self.fists.append(fist)
                     self.fists_spawned = True
                     self.num_fists_spawned += 1
@@ -314,6 +371,8 @@ def main():
         boss.draw(SCREEN)
         boss.choose_shadow_attack()
 
+        if collides(player, boss):
+            player.health -= .25
 
         for shadow in boss.shadows:
             shadow.movement(SCR_WID, SCR_HEI)
@@ -348,7 +407,7 @@ def main():
 
             if collides(player, fist):
                 if fist not in collided_fists:
-                    player.health -= 45
+                    player.health -= 35
                     collided_fists.add(fist)
 
 
